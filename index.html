@@ -1,272 +1,813 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WhatsApp Broadcast Analytics Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <style>
-    :root { --navy:#172b5c; --blue:#3157a4; --bg:#f4f6fb; --muted:#6b7280; }
-    body { background:var(--bg); color:#202938; font-family:Arial,sans-serif; }
-    .topbar { background:var(--navy); color:#fff; }
-    .brand-mark { width:38px;height:38px;border-radius:11px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:800; }
-    .card { border:0; border-radius:15px; box-shadow:0 4px 18px rgba(24,39,75,.06); }
-    .kpi-label { color:var(--muted);font-size:.82rem; }
-    .kpi-value { font-size:1.75rem;font-weight:750;letter-spacing:-.04em; }
-    .kpi-icon { width:38px;height:38px;border-radius:12px;background:#edf2ff;color:var(--blue);display:grid;place-items:center;font-size:1.1rem; }
-    .section-title { font-weight:700; }
-    .table thead th { background:#eef2f8;color:#34415c;font-size:.8rem;white-space:nowrap; }
-    .table td { font-size:.86rem;vertical-align:middle; }
-    .upload-zone { border:2px dashed #bdc9dc;border-radius:14px;background:#fbfcff; }
-    .upload-zone.drag { border-color:var(--blue);background:#f0f4ff; }
-    .small-muted { color:var(--muted);font-size:.82rem; }
-    .pill { background:#edf2ff;color:#284b94;border-radius:50rem;padding:.25rem .65rem;font-size:.75rem;font-weight:600; }
-    .nav-pills .nav-link { color:#4b5874; }
-    .nav-pills .nav-link.active { background:var(--navy); }
-    .chart-wrap { height:280px; position:relative; }
-    .empty-state { border:1px dashed #cbd5e1;border-radius:12px;padding:2rem;text-align:center;color:var(--muted); }
-    @media(max-width:767px){.kpi-value{font-size:1.4rem}.chart-wrap{height:240px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatsApp API Analytics Dashboard</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --navy:#172b5c;
+  --blue:#3157a4;
+  --bg:#f4f6fb;
+}
+body {
+  background:var(--bg);
+  font-family:Arial,sans-serif;
+  color:#202938;
+}
+.topbar {background:var(--navy);color:white;}
+.brand {
+  width:40px;height:40px;border-radius:10px;
+  background:white;color:var(--navy);
+  display:grid;place-items:center;font-weight:bold;
+}
+.card {
+  border:0;border-radius:14px;
+  box-shadow:0 4px 18px rgba(24,39,75,.06);
+}
+.kpi-label {color:#6b7280;font-size:13px;}
+.kpi-value {font-size:28px;font-weight:750;}
+.upload-zone {
+  border:2px dashed #bdc9dc;
+  border-radius:14px;background:#fbfcff;
+}
+.upload-zone.drag {background:#edf2ff;border-color:var(--blue);}
+.chart-wrap {height:270px;position:relative;}
+.table thead th {
+  background:#eef2f8;
+  font-size:12px;
+  white-space:nowrap;
+}
+.table td {font-size:13px;vertical-align:middle;}
+.status {
+  padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;
+}
+.success {background:#e4f6ed;color:#16794b;}
+.failed {background:#fde8e8;color:#b42318;}
+@media(max-width:767px) {
+  .kpi-value {font-size:22px;}
+  .chart-wrap {height:230px;}
+}
+</style>
 </head>
+
 <body>
+
 <nav class="topbar py-3">
-  <div class="container-fluid px-lg-4 d-flex align-items-center gap-3">
-    <div class="brand-mark">WA</div>
-    <div>
-      <div class="fw-bold">Broadcast Analytics</div>
-      <div class="small opacity-75">WhatsApp campaign performance & recipient reports</div>
-    </div>
-    <div class="ms-auto"><span class="badge text-bg-light text-primary">Local file processing</span></div>
+<div class="container-fluid px-4 d-flex align-items-center gap-3">
+  <div class="brand">WA</div>
+  <div>
+    <h5 class="mb-0">WhatsApp API Analytics</h5>
+    <small>Marketing API Broadcast Performance</small>
   </div>
+  <span class="badge bg-light text-primary ms-auto">Local Processing</span>
+</div>
 </nav>
 
-<main class="container-fluid px-lg-4 py-4">
-  <section class="card p-3 p-lg-4 mb-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-      <div>
-        <h5 class="section-title mb-1">Upload broadcast report</h5>
-        <div class="small-muted">Upload your broadcast history and, if available, the recipient/message log. You can select multiple CSV or Excel files together.</div>
+<main class="container-fluid px-4 py-4">
+
+<!-- UPLOAD -->
+
+<div class="card p-4 mb-4">
+  <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+    <div>
+      <h5>Upload Broadcast History</h5>
+      <small class="text-muted">
+        Upload your WhatsApp API history CSV or Excel file.
+      </small>
+    </div>
+
+    <div>
+      <button id="excelBtn" class="btn btn-primary" disabled>
+        Download Excel
+      </button>
+      <button id="csvBtn" class="btn btn-outline-primary" disabled>
+        Download CSV
+      </button>
+    </div>
+  </div>
+
+  <div id="dropZone" class="upload-zone p-4 text-center">
+    <div class="fs-1">📂</div>
+    <h6>Upload your API history file</h6>
+    <p class="text-muted small">CSV, XLS or XLSX</p>
+
+    <input type="file" id="fileInput" class="d-none"
+           accept=".csv,.xlsx,.xls">
+
+    <button class="btn btn-primary" id="uploadBtn">
+      Choose CSV / Excel File
+    </button>
+
+    <div id="fileName" class="small text-muted mt-3">
+      No file selected
+    </div>
+  </div>
+
+  <div id="message" class="small mt-3 text-muted">
+    Your data is processed locally in your browser.
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+
+<section id="dashboard" class="d-none">
+
+<div class="d-flex justify-content-between flex-wrap mb-3">
+  <div>
+    <h5>Performance Overview</h5>
+    <small id="dateRange" class="text-muted"></small>
+  </div>
+  <div>
+    <span class="badge bg-primary" id="totalRecords">0 Requests</span>
+    <span class="badge bg-secondary" id="totalRecipients">0 Recipients</span>
+  </div>
+</div>
+
+<!-- KPI CARDS -->
+
+<div class="row g-3 mb-4">
+
+  <div class="col-6 col-xl-3">
+    <div class="card p-3 h-100">
+      <div class="kpi-label">Total API Requests</div>
+      <div class="kpi-value" id="total">0</div>
+      <small class="text-muted">Total records</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card p-3 h-100">
+      <div class="kpi-label">API Success</div>
+      <div class="kpi-value text-success" id="success">0</div>
+      <small id="successRate">Success rate: —</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card p-3 h-100">
+      <div class="kpi-label">API Failed</div>
+      <div class="kpi-value text-danger" id="failed">0</div>
+      <small id="failedRate">Failure rate: —</small>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card p-3 h-100">
+      <div class="kpi-label">Unique Recipients</div>
+      <div class="kpi-value" id="recipients">0</div>
+      <small class="text-muted">Unique WhatsApp numbers</small>
+    </div>
+  </div>
+
+</div>
+
+<!-- CHARTS -->
+
+<div class="row g-3 mb-4">
+
+  <div class="col-xl-6">
+    <div class="card p-3">
+      <h6>API Status Distribution</h6>
+      <div class="chart-wrap">
+        <canvas id="statusChart"></canvas>
       </div>
-      <div class="d-flex gap-2 flex-wrap">
-        <button id="downloadExcel" class="btn btn-primary" disabled>Download Excel report</button>
-        <button id="downloadCsv" class="btn btn-outline-primary" disabled>Download recipient CSV</button>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card p-3">
+      <h6>HTTP Response Codes</h6>
+      <div class="chart-wrap">
+        <canvas id="codeChart"></canvas>
       </div>
     </div>
-    <div id="dropZone" class="upload-zone p-4 text-center">
-      <div class="fs-2 mb-2">📂</div>
-      <div class="fw-semibold mb-1">Choose files or drag and drop them here</div>
-      <div class="small-muted mb-3">Supported formats: .xlsx, .xls, .csv</div>
-      <input id="fileInput" type="file" class="form-control d-none" accept=".xlsx,.xls,.csv" multiple>
-      <button class="btn btn-primary px-4" id="chooseFiles">Upload CSV / Excel</button>
-      <div id="fileNames" class="small-muted mt-3">No files uploaded yet</div>
-    </div>
-    <div id="status" class="mt-3 small-muted" role="status">Your files are processed in this browser; they are not sent to a server.</div>
-    <div id="dataNotice" class="alert alert-warning mt-3 mb-0 d-none"></div>
-  </section>
+  </div>
 
-  <section id="dashboard" class="d-none">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-      <div><h5 class="section-title mb-1">Performance overview</h5><div id="reportRange" class="small-muted"></div></div>
-      <div class="d-flex gap-2"><span class="pill" id="broadcastCount">0 broadcasts</span><span class="pill" id="recipientCount">0 recipients</span></div>
-    </div>
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-xl-3"><div class="card p-3 h-100"><div class="d-flex justify-content-between"><div class="kpi-label">Submitted</div><div class="kpi-icon">↗</div></div><div id="kSubmitted" class="kpi-value">0</div><div class="small-muted">Messages submitted</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3 h-100"><div class="d-flex justify-content-between"><div class="kpi-label">Delivered</div><div class="kpi-icon">✓</div></div><div id="kDelivered" class="kpi-value">0</div><div id="deliveryRate" class="small-muted">Delivery rate: —</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3 h-100"><div class="d-flex justify-content-between"><div class="kpi-label">Read</div><div class="kpi-icon">◉</div></div><div id="kRead" class="kpi-value">0</div><div id="readRate" class="small-muted">Read rate: —</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3 h-100"><div class="d-flex justify-content-between"><div class="kpi-label">Failed</div><div class="kpi-icon">!</div></div><div id="kFailed" class="kpi-value">0</div><div id="failedRate" class="small-muted">Failure rate: —</div></div></div>
-    </div>
-
-    <div class="row g-3 mb-4">
-      <div class="col-xl-7"><div class="card p-3 p-lg-4 h-100"><h6 class="section-title">Message delivery funnel</h6><div class="chart-wrap"><canvas id="funnelChart"></canvas></div></div></div>
-      <div class="col-xl-5"><div class="card p-3 p-lg-4 h-100"><h6 class="section-title">Broadcast status</h6><div class="chart-wrap"><canvas id="statusChart"></canvas></div></div></div>
-      <div class="col-xl-7"><div class="card p-3 p-lg-4 h-100"><h6 class="section-title">Daily message performance</h6><div class="chart-wrap"><canvas id="dailyChart"></canvas></div></div></div>
-      <div class="col-xl-5"><div class="card p-3 p-lg-4 h-100"><h6 class="section-title">Channel distribution</h6><div class="chart-wrap"><canvas id="channelChart"></canvas></div></div></div>
-    </div>
-
-    <div class="card p-3 p-lg-4 mb-4">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><div><h6 class="section-title mb-1">Broadcast history report</h6><div class="small-muted">One row per broadcast, based on the uploaded history export.</div></div><input id="broadcastSearch" class="form-control form-control-sm" style="max-width:260px" placeholder="Search broadcasts..."></div>
-      <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Broadcast</th><th>Published</th><th>Submitted</th><th>Failed</th><th>Sent</th><th>Delivered</th><th>Read</th><th>Opted out</th><th>Channel</th><th>Status</th></tr></thead><tbody id="broadcastTable"></tbody></table></div>
-    </div>
-
-    <div class="card p-3 p-lg-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div><h6 class="section-title mb-1">Daily recipient report</h6><div class="small-muted">Groups messages by date and recipient, like your sample report.</div></div>
-        <input id="recipientSearch" class="form-control form-control-sm" style="max-width:260px" placeholder="Search name or phone...">
+  <div class="col-xl-7">
+    <div class="card p-3">
+      <h6>Daily API Requests</h6>
+      <div class="chart-wrap">
+        <canvas id="dailyChart"></canvas>
       </div>
-      <ul class="nav nav-pills mb-3" id="reportTabs"><li class="nav-item"><button class="nav-link active" data-view="recipients">Recipient details</button></li><li class="nav-item"><button class="nav-link" data-view="templates">Template summary</button></li></ul>
-      <div id="recipientView" class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Date</th><th>Name</th><th>Phone Number (WA ID)</th><th>Message 1 (Template / Time Sent)</th><th>Message 2 (Template / Time Sent)</th><th>Messages This Day</th></tr></thead><tbody id="recipientTable"></tbody></table></div>
-      <div id="templateView" class="table-responsive d-none"><table class="table table-hover align-middle mb-0"><thead><tr><th>Template</th><th>Messages</th><th>Unique recipients</th><th>First sent</th><th>Last sent</th></tr></thead><tbody id="templateTable"></tbody></table></div>
-      <div id="recipientEmpty" class="empty-state d-none mt-2">No recipient-level message records were detected. Upload a recipient/message log containing phone number, template name and sent date/time to create this report.</div>
     </div>
-  </section>
-  <footer class="text-center small-muted py-4">WhatsApp Broadcast Analytics • Generated in your browser</footer>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card p-3">
+      <h6>Template Usage</h6>
+      <div class="chart-wrap">
+        <canvas id="templateChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- API HISTORY -->
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+    <h6>API Request History</h6>
+    <input id="search" class="form-control form-control-sm"
+           style="max-width:280px"
+           placeholder="Search recipient, template, status...">
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Application</th>
+          <th>Status</th>
+          <th>Response Code</th>
+          <th>Call</th>
+          <th>Recipient Name</th>
+          <th>WhatsApp Number</th>
+          <th>Template</th>
+          <th>Message ID</th>
+        </tr>
+      </thead>
+      <tbody id="historyTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TEMPLATE REPORT -->
+
+<div class="card p-4">
+  <h6>Template Performance Report</h6>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Template</th>
+          <th>Total Requests</th>
+          <th>Successful</th>
+          <th>Failed</th>
+          <th>Unique Recipients</th>
+        </tr>
+      </thead>
+      <tbody id="templateTable"></tbody>
+    </table>
+  </div>
+</div>
+
+</section>
+
 </main>
 
 <script>
 (() => {
-  const $ = id => document.getElementById(id);
-  let broadcasts = [], messages = [], charts = {}, workbookName = "Broadcast_Analytics_Report";
-  const aliases = {
-    broadcast:["broadcast","broadcast name","campaign","campaign name","broadcast id","name"],
-    published:["published","published date","broadcast date","date","created date","created at"],
-    submitted:["submitted","submitted count","submitted users","total submitted"],
-    failed:["failed users","failed","failed count","failure count"],
-    sent:["sent count","sent","messages sent","sent messages"],
-    delivered:["delivered","delivered count","delivery count"],
-    read:["read count","read","messages read"],
-    opted:["opted out","opted out count","optouts","opt out"],
-    target:["target users","target user","recipients","total recipients"],
-    channel:["channels","channel"],
-    status:["status","broadcast status"],
-    template:["template","template name","message template","template title"],
-    phone:["phone number","phone","wa id","whatsapp number","recipient phone","mobile","mobile number","to"],
-    recipient:["recipient name","contact name","customer name","name","user name"],
-    sentAt:["time sent","sent at","message sent at","timestamp","created at","date time","datetime","sent time"],
-    messageDate:["message date","sent date","date"],
-    click:["cta url clicks","clicks","click count"],
-    clickRate:["click rate","ctr"],
-    segment:["segment"],
-    createdBy:["created by","creator"],
-    completion:["completion time","duration"],
-    unsent:["unsent","unsent count"]
-  };
-  const norm = s => String(s ?? "").toLowerCase().replace(/[\u200b-\u200d]/g,"").replace(/[_\-]+/g," ").replace(/[^\p{L}\p{N} ]/gu," ").replace(/\s+/g," ").trim();
-  function findKey(row, key) {
-    const keys = Object.keys(row), wanted = aliases[key] || [key];
-    for (const a of wanted) { const hit = keys.find(k => norm(k) === norm(a)); if (hit !== undefined) return hit; }
-    for (const a of wanted) { const hit = keys.find(k => norm(k).includes(norm(a)) || norm(a).includes(norm(k))); if (hit !== undefined && norm(k).length > 2) return hit; }
-    return null;
-  }
-  function val(row,key) { const k=findKey(row,key); return k===null ? "" : row[k]; }
-  function num(v) { if (typeof v === "number") return Number.isFinite(v)?v:0; const n=Number(String(v??"").replace(/[, %]/g,"").trim()); return Number.isFinite(n)?n:0; }
-  function dateObj(v) {
-    if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "number" && v > 20000 && v < 80000) return new Date(Math.round((v-25569)*86400*1000));
-    const s=String(v??"").trim(); if(!s) return null;
-    let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(.*)$/);
-    if(m){ const d=new Date(+m[3],+m[2]-1,+m[1]); if(m[4]){const t=m[4].trim().match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i); if(t){let h=+t[1];if(t[4]?.toUpperCase()==="PM"&&h<12)h+=12;if(t[4]?.toUpperCase()==="AM"&&h===12)h=0;d.setHours(h,+t[2],+(t[3]||0));}} return d; }
-    const d=new Date(s); return isNaN(d)?null:d;
-  }
-  function dateText(v, withTime=false) { const d=dateObj(v); if(!d)return String(v??""); const date=d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); return withTime?date+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):date; }
-  function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-  function firstNonEmpty(row,key){const v=val(row,key);return v===null?"":String(v).trim();}
-  function toRows(sheet){return XLSX.utils.sheet_to_json(sheet,{defval:"",raw:true});}
-  function classify(rows){
-    if(!rows.length)return "unknown";
-    const r=rows[0], hasPhone=!!findKey(r,"phone"), hasTemplate=!!findKey(r,"template"), hasSent=!!findKey(r,"sentAt")||!!findKey(r,"messageDate");
-    const hasBroadcast=!!findKey(r,"broadcast")||!!findKey(r,"submitted")||!!findKey(r,"delivered");
-    if(hasPhone && (hasTemplate||hasSent)) return "messages";
-    if(hasBroadcast) return "broadcasts";
-    return "unknown";
-  }
-  async function parseFile(file){
-    const buf=await file.arrayBuffer(); const wb=XLSX.read(buf,{type:"array",cellDates:true});
-    const out=[];
-    for(const sn of wb.SheetNames){const rows=toRows(wb.Sheets[sn]); if(rows.length)out.push({file:file.name,sheet:sn,rows,type:classify(rows)});}
-    return out;
-  }
-  function normalizeBroadcast(row){
-    return {broadcast:firstNonEmpty(row,"broadcast")||"Broadcast",published:val(row,"published"),target:num(val(row,"target")),submitted:num(val(row,"submitted")),failed:num(val(row,"failed")),sent:num(val(row,"sent")),delivered:num(val(row,"delivered")),read:num(val(row,"read")),opted:num(val(row,"opted")),channel:firstNonEmpty(row,"channel"),status:firstNonEmpty(row,"status"),template:firstNonEmpty(row,"template"),click:num(val(row,"click")),clickRate:firstNonEmpty(row,"clickRate"),segment:firstNonEmpty(row,"segment"),createdBy:firstNonEmpty(row,"createdBy"),completion:firstNonEmpty(row,"completion"),unsent:num(val(row,"unsent"))};
-  }
-  function normalizeMessage(row){
-    const dt=val(row,"sentAt")||val(row,"messageDate");
-    return {date:dateText(dt),dateKey:(dateObj(dt)||new Date(0)).toISOString().slice(0,10),name:firstNonEmpty(row,"recipient")||"Unknown",phone:firstNonEmpty(row,"phone"),template:firstNonEmpty(row,"template")||"Template not specified",sentAt:dateText(dt,true),rawDate:dt};
-  }
-  function aggregateRecipients(){
-    const groups=new Map();
-    messages.forEach(m=>{const key=m.dateKey+"|"+m.phone+"|"+m.name; if(!groups.has(key))groups.set(key,{date:m.date,name:m.name,phone:m.phone,items:[]});groups.get(key).items.push(m);});
-    return [...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name)).map(g=>({...g,items:g.items.sort((a,b)=>(dateObj(a.rawDate)||0)-(dateObj(b.rawDate)||0))}));
-  }
-  function total(key){return broadcasts.reduce((s,b)=>s+(Number(b[key])||0),0);}
-  function pct(a,b){return b?((a/b)*100).toFixed(1)+"%":"—";}
-  function setText(id,v){$(id).textContent=v;}
-  function destroyCharts(){Object.values(charts).forEach(c=>c?.destroy());charts={};}
-  function chart(id,type,data,options={}){if(charts[id])charts[id].destroy();charts[id]=new Chart($(id),{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},...options}});}
-  function render(){
-    $("dashboard").classList.remove("d-none");
-    const submitted=total("submitted"), delivered=total("delivered"), read=total("read"), failed=total("failed");
-    setText("kSubmitted",submitted.toLocaleString());setText("kDelivered",delivered.toLocaleString());setText("kRead",read.toLocaleString());setText("kFailed",failed.toLocaleString());
-    setText("deliveryRate","Delivery rate: "+pct(delivered,submitted));setText("readRate","Read rate: "+pct(read,delivered));setText("failedRate","Failure rate: "+pct(failed,submitted));
-    setText("broadcastCount",broadcasts.length+" broadcasts");setText("recipientCount",messages.length+" messages");
-    const dates=broadcasts.map(b=>dateObj(b.published)).filter(Boolean).sort((a,b)=>a-b);
-    setText("reportRange",dates.length?dates[0].toLocaleDateString("en-GB")+" – "+dates[dates.length-1].toLocaleDateString("en-GB"):"Date range not available");
-    chart("funnelChart","bar",{labels:["Submitted","Delivered","Read","Failed"],datasets:[{label:"Messages",data:[submitted,delivered,read,failed],backgroundColor:["#3157a4","#28a477","#61a6d9","#e36b6b"],borderRadius:7}]},{indexAxis:"y",scales:{x:{beginAtZero:true}}});
-    const statuses={};broadcasts.forEach(b=>{const s=b.status||"Not specified";statuses[s]=(statuses[s]||0)+1;});
-    chart("statusChart","doughnut",{labels:Object.keys(statuses),datasets:[{data:Object.values(statuses),backgroundColor:["#3157a4","#28a477","#e8ad4c","#d86b6b","#8794ac"]}]});
-    const daily={};broadcasts.forEach(b=>{const d=dateText(b.published)||"Unknown";if(!daily[d])daily[d]={sent:0,delivered:0,read:0};daily[d].sent+=b.sent;daily[d].delivered+=b.delivered;daily[d].read+=b.read;});
-    const dl=Object.keys(daily).sort((a,b)=>(dateObj(a)||0)-(dateObj(b)||0));
-    chart("dailyChart","line",{labels:dl,datasets:[{label:"Sent",data:dl.map(d=>daily[d].sent),borderColor:"#3157a4",backgroundColor:"#3157a4",tension:.25},{label:"Delivered",data:dl.map(d=>daily[d].delivered),borderColor:"#28a477",backgroundColor:"#28a477",tension:.25},{label:"Read",data:dl.map(d=>daily[d].read),borderColor:"#e8ad4c",backgroundColor:"#e8ad4c",tension:.25}]});
-    const channels={};broadcasts.forEach(b=>{const c=b.channel||"Not specified";channels[c]=(channels[c]||0)+1;});
-    chart("channelChart","pie",{labels:Object.keys(channels),datasets:[{data:Object.values(channels),backgroundColor:["#3157a4","#28a477","#e8ad4c","#9b83cf","#d86b6b"]}]});
-    renderBroadcastTable();renderRecipientTable();renderTemplateTable();
-    $("downloadExcel").disabled=!(broadcasts.length||messages.length);$("downloadCsv").disabled=!messages.length;
-    if(!messages.length){$("recipientEmpty").classList.remove("d-none");$("recipientView").classList.add("d-none");$("templateView").classList.add("d-none");}
-    else {$("recipientEmpty").classList.add("d-none");$("recipientView").classList.remove("d-none");}
-  }
-  function renderBroadcastTable(){
-    const q=norm($("broadcastSearch").value);const rows=broadcasts.filter(b=>!q||norm(Object.values(b).join(" ")).includes(q));
-    $("broadcastTable").innerHTML=rows.map(b=>`<tr><td class="fw-semibold">${esc(b.broadcast)}</td><td>${esc(dateText(b.published))}</td><td>${b.submitted.toLocaleString()}</td><td>${b.failed.toLocaleString()}</td><td>${b.sent.toLocaleString()}</td><td>${b.delivered.toLocaleString()}</td><td>${b.read.toLocaleString()}</td><td>${b.opted.toLocaleString()}</td><td>${esc(b.channel||"—")}</td><td>${esc(b.status||"—")}</td></tr>`).join("")||'<tr><td colspan="10" class="text-center text-muted py-4">No matching broadcast rows</td></tr>';
-  }
-  function renderRecipientTable(){
-    const q=norm($("recipientSearch").value);const rows=aggregateRecipients().filter(g=>!q||norm(g.name+" "+g.phone).includes(q));
-    $("recipientTable").innerHTML=rows.map(g=>{const a=g.items[0],b=g.items[1];return `<tr><td>${esc(g.date)}</td><td class="fw-semibold">${esc(g.name)}</td><td>${esc(g.phone)}</td><td>${a?esc(a.template+" — "+a.sentAt):"—"}</td><td>${b?esc(b.template+" — "+b.sentAt):"—"}</td><td><span class="pill">${g.items.length}</span></td></tr>`;}).join("")||'<tr><td colspan="6" class="text-center text-muted py-4">No matching recipients</td></tr>';
-  }
-  function renderTemplateTable(){
-    const t={};messages.forEach(m=>{if(!t[m.template])t[m.template]={count:0,phones:new Set(),times:[]};t[m.template].count++;if(m.phone)t[m.template].phones.add(m.phone);if(dateObj(m.rawDate))t[m.template].times.push(dateObj(m.rawDate));});
-    $("templateTable").innerHTML=Object.entries(t).sort((a,b)=>b[1].count-a[1].count).map(([name,v])=>`<tr><td class="fw-semibold">${esc(name)}</td><td>${v.count}</td><td>${v.phones.size}</td><td>${v.times.length?esc(dateText(v.times.sort((a,b)=>a-b)[0],true)):"—"}</td><td>${v.times.length?esc(dateText(v.times.sort((a,b)=>a-b).at(-1),true)):"—"}</td></tr>`).join("")||'<tr><td colspan="5" class="text-center text-muted py-4">No template records</td></tr>';
-  }
-  function downloadExcel(){
-    const wb=XLSX.utils.book_new();
-    const summary=[["WhatsApp Broadcast Performance Report"],["Generated on",new Date().toLocaleString()],[],["Metric","Total"],["Broadcasts",broadcasts.length],["Submitted",total("submitted")],["Delivered",total("delivered")],["Read",total("read")],["Failed",total("failed")],["Opted out",total("opted")],["Unique recipients",new Set(messages.map(m=>m.phone).filter(Boolean)).size]];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),"Dashboard Summary");
-    const bdata=[["Broadcast","Published","Target Users","Submitted","Failed Users","Sent Count","Delivered","Read Count","Opted Out","Segment","Created By","Template","CTA URL Clicks","Click Rate","Channels","Unsent","Completion Time","Status"],...broadcasts.map(b=>[b.broadcast,dateText(b.published),b.target,b.submitted,b.failed,b.sent,b.delivered,b.read,b.opted,b.segment,b.createdBy,b.template,b.click,b.clickRate,b.channel,b.unsent,b.completion,b.status])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bdata),"Broadcast History");
-    const rdata=[["Date","Name","Phone Number (WA ID)","Message 1 (Template / Time Sent)","Message 2 (Template / Time Sent)","Messages This Day"],...aggregateRecipients().map(g=>[g.date,g.name,g.phone,g.items[0]?g.items[0].template+" — "+g.items[0].sentAt:"",g.items[1]?g.items[1].template+" — "+g.items[1].sentAt:"",g.items.length])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rdata),"Daily Recipient Report");
-    const mdata=[["Date","Name","Phone Number (WA ID)","Template","Time Sent"],...messages.map(m=>[m.date,m.name,m.phone,m.template,m.sentAt])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(mdata),"Raw Message Log");
-    const tdata=[["Template","Messages","Unique Recipients"],...Object.entries(messages.reduce((a,m)=>{a[m.template]??={n:0,p:new Set()};a[m.template].n++;if(m.phone)a[m.template].p.add(m.phone);return a;},{})).map(([k,v])=>[k,v.n,v.p.size])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(tdata),"Template Summary");
-    XLSX.writeFile(wb,workbookName+".xlsx");
-  }
-  function downloadCsv(){
-    const data=[["Date","Name","Phone Number (WA ID)","Message 1 (Template / Time Sent)","Message 2 (Template / Time Sent)","Messages This Day"],...aggregateRecipients().map(g=>[g.date,g.name,g.phone,g.items[0]?g.items[0].template+" — "+g.items[0].sentAt:"",g.items[1]?g.items[1].template+" — "+g.items[1].sentAt:"",g.items.length])];
-    const csv=data.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
-    const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Daily_Recipient_Report.csv";a.click();URL.revokeObjectURL(a.href);
-  }
-  async function processFiles(files){
-    broadcasts=[];messages=[];destroyCharts();$("status").textContent="Reading files…";$("dataNotice").classList.add("d-none");
-    const names=[];let unknown=[];
-    try{
-      for(const file of files){names.push(file.name);const sheets=await parseFile(file);for(const sh of sheets){
-        if(sh.type==="broadcasts")broadcasts.push(...sh.rows.map(normalizeBroadcast));
-        else if(sh.type==="messages")messages.push(...sh.rows.map(normalizeMessage).filter(m=>m.phone||m.template!=="Template not specified"));
-        else if(sh.rows.length)unknown.push(file.name+" / "+sh.sheet);
-      }}
-      workbookName=(files.length===1?files[0].name.replace(/\.[^.]+$/,""):"WhatsApp_Broadcast_Report").replace(/[^\w\-]+/g,"_");
-      $("fileNames").textContent=names.join(" • ");$("status").textContent=`Processed ${names.length} file(s): ${broadcasts.length} broadcast rows and ${messages.length} message rows detected.`;
-      if(!broadcasts.length&&!messages.length)throw new Error("No recognized columns found. Please check the header names in your CSV/Excel file.");
-      if(!messages.length){$("dataNotice").textContent="Broadcast history was detected, but recipient-level phone numbers, template names and sent timestamps were not found. The dashboard and broadcast report are ready. Upload the recipient message log as another file to generate the daily recipient report."; $("dataNotice").classList.remove("d-none");}
-      else if(!broadcasts.length){$("dataNotice").textContent="Recipient-level message data was detected. No broadcast summary sheet was identified, so broadcast KPIs and broadcast charts may be empty."; $("dataNotice").classList.remove("d-none");}
-      render();
-    }catch(e){$("status").textContent="Could not process the selected file(s): "+e.message; $("dashboard").classList.add("d-none");}
-  }
-  $("chooseFiles").addEventListener("click",()=>$("fileInput").click());
-  $("fileInput").addEventListener("change",e=>{if(e.target.files.length)processFiles([...e.target.files]);});
-  const dz=$("dropZone");
-  ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
-  ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
-  dz.addEventListener("drop",e=>{const fs=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));if(fs.length)processFiles(fs);});
-  $("downloadExcel").addEventListener("click",downloadExcel);$("downloadCsv").addEventListener("click",downloadCsv);
-  $("broadcastSearch").addEventListener("input",renderBroadcastTable);$("recipientSearch").addEventListener("input",renderRecipientTable);
-  document.querySelectorAll("#reportTabs button").forEach(btn=>btn.addEventListener("click",()=>{
-    document.querySelectorAll("#reportTabs .nav-link").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
-    const recipient=btn.dataset.view==="recipients";$("recipientView").classList.toggle("d-none",!recipient);$("templateView").classList.toggle("d-none",recipient);
-    $("recipientEmpty").classList.toggle("d-none",recipient||messages.length>0);
-  }));
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+let records = [];
+let charts = {};
+
+const aliases = {
+ application:["application"],
+ status:["status"],
+ call:["call","method"],
+ url:["request url"],
+ code:["response code"],
+ request:["request"],
+ response:["response"],
+ time:["time"]
+};
+
+function normalize(value) {
+ return String(value ?? "")
+ .toLowerCase()
+ .replace(/[_-]+/g," ")
+ .replace(/[^\p{L}\p{N} ]/gu," ")
+ .replace(/\s+/g," ").trim();
+}
+
+function getValue(row,field) {
+ const keys = Object.keys(row);
+ const names = aliases[field] || [field];
+
+ for(const name of names) {
+   const key = keys.find(k => normalize(k) === normalize(name));
+   if(key !== undefined) return row[key];
+ }
+ return "";
+}
+
+function parseJSON(value) {
+ if(value && typeof value === "object") return value;
+ if(typeof value !== "string") return {};
+ try { return JSON.parse(value.trim()); }
+ catch(e) { return {}; }
+}
+
+function safe(value) {
+ return String(value ?? "").trim();
+}
+
+function parseDate(value) {
+ if(value instanceof Date && !isNaN(value)) return value;
+
+ if(typeof value === "number" && value > 20000 && value < 80000) {
+   return new Date((value - 25569) * 86400000);
+ }
+
+ let s = safe(value);
+ if(!s) return null;
+
+ s = s.replace(/\sUTC\s/," GMT ");
+ const d = new Date(s);
+
+ return isNaN(d) ? null : d;
+}
+
+function dateText(date) {
+ if(!date) return "—";
+ return date.toLocaleString("en-GB",{
+   day:"2-digit",
+   month:"short",
+   year:"numeric",
+   hour:"2-digit",
+   minute:"2-digit",
+   second:"2-digit"
+ });
+}
+
+function escapeHTML(value) {
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+   "&":"&amp;","<":"&lt;",">":"&gt;",
+   '"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+function extract(row) {
+
+ const request = parseJSON(getValue(row,"request"));
+ const response = parseJSON(getValue(row,"response"));
+
+ const template = request.template || {};
+
+ let recipientName = "";
+
+ const components = template.components || [];
+
+ for(const component of components) {
+   if(component.type === "body" && Array.isArray(component.parameters)) {
+     const param = component.parameters.find(
+       p => p.type === "text" && p.text
+     );
+     if(param) {
+       recipientName = param.text;
+       break;
+     }
+   }
+ }
+
+ const contact = response.contacts?.[0] || {};
+ const message = response.messages?.[0] || {};
+
+ const phone = safe(
+   request.to || contact.wa_id || contact.input
+ );
+
+ const code = safe(getValue(row,"code"));
+ const status = safe(getValue(row,"status"));
+
+ const failed =
+   (code !== "" && Number(code) >= 400) ||
+   /fail|error/i.test(status);
+
+ const time = parseDate(getValue(row,"time"));
+
+ return {
+   application:safe(getValue(row,"application")),
+   status:status || (failed ? "FAILED" : "SUCCESS"),
+   failed,
+   code,
+   call:safe(getValue(row,"call")),
+   url:safe(getValue(row,"url")),
+   name:recipientName || "Unknown",
+   phone,
+   template:safe(template.name) || "Not specified",
+   messageId:safe(message.id),
+   time,
+   request:getValue(row,"request"),
+   response:getValue(row,"response")
+ };
+}
+
+function getUniqueRecipients() {
+ return new Set(records.map(r=>r.phone).filter(Boolean)).size;
+}
+
+function totalFailed() {
+ return records.filter(r=>r.failed).length;
+}
+
+function totalSuccess() {
+ return records.filter(r=>!r.failed).length;
+}
+
+function destroyCharts() {
+ Object.values(charts).forEach(c=>c.destroy());
+ charts={};
+}
+
+function makeChart(id,type,data,options={}) {
+ if(charts[id]) charts[id].destroy();
+
+ charts[id]=new Chart($(id),{
+   type,
+   data,
+   options:{
+     responsive:true,
+     maintainAspectRatio:false,
+     plugins:{legend:{position:"bottom"}},
+     ...options
+   }
+ });
+}
+
+function render() {
+
+ $("dashboard").classList.remove("d-none");
+
+ const total=records.length;
+ const success=totalSuccess();
+ const failed=totalFailed();
+ const unique=getUniqueRecipients();
+
+ $("total").textContent=total.toLocaleString();
+ $("success").textContent=success.toLocaleString();
+ $("failed").textContent=failed.toLocaleString();
+ $("recipients").textContent=unique.toLocaleString();
+
+ $("successRate").textContent=
+   "Success rate: "+(total ? (success/total*100).toFixed(1)+"%" : "—");
+
+ $("failedRate").textContent=
+   "Failure rate: "+(total ? (failed/total*100).toFixed(1)+"%" : "—");
+
+ $("totalRecords").textContent=total+" Requests";
+ $("totalRecipients").textContent=unique+" Recipients";
+
+ const dates=records.map(r=>r.time).filter(Boolean).sort((a,b)=>a-b);
+
+ $("dateRange").textContent=dates.length
+   ? dates[0].toLocaleDateString("en-GB")+" – "+
+     dates[dates.length-1].toLocaleDateString("en-GB")
+   : "Date unavailable";
+
+ // Status chart
+
+ makeChart("statusChart","doughnut",{
+   labels:["Success","Failed"],
+   datasets:[{
+     data:[success,failed],
+     backgroundColor:["#28a477","#e36b6b"]
+   }]
+ });
+
+ // HTTP response code chart
+
+ const codes={};
+
+ records.forEach(r=>{
+   const code=r.code || "Unknown";
+   codes[code]=(codes[code]||0)+1;
+ });
+
+ makeChart("codeChart","bar",{
+   labels:Object.keys(codes),
+   datasets:[{
+     label:"API Requests",
+     data:Object.values(codes),
+     backgroundColor:"#3157a4",
+     borderRadius:7
+   }]
+ },{scales:{y:{beginAtZero:true,ticks:{precision:0}}}});
+
+ // Daily chart
+
+ const daily={};
+
+ records.forEach(r=>{
+   const day=r.time
+     ? r.time.toLocaleDateString("en-CA")
+     : "Unknown";
+
+   daily[day]=(daily[day]||0)+1;
+ });
+
+ const dayLabels=Object.keys(daily).sort();
+
+ makeChart("dailyChart","line",{
+   labels:dayLabels,
+   datasets:[{
+     label:"API Requests",
+     data:dayLabels.map(d=>daily[d]),
+     borderColor:"#3157a4",
+     backgroundColor:"#3157a4",
+     tension:.3
+   }]
+ });
+
+ // Template chart
+
+ const templates={};
+
+ records.forEach(r=>{
+   templates[r.template]=(templates[r.template]||0)+1;
+ });
+
+ const templateData=Object.entries(templates)
+   .sort((a,b)=>b[1]-a[1]);
+
+ makeChart("templateChart","bar",{
+   labels:templateData.map(x=>x[0]),
+   datasets:[{
+     label:"Requests",
+     data:templateData.map(x=>x[1]),
+     backgroundColor:"#28a477",
+     borderRadius:7
+   }]
+ },{indexAxis:"y"});
+
+ renderHistory();
+ renderTemplates();
+
+ $("excelBtn").disabled=false;
+ $("csvBtn").disabled=false;
+}
+
+function renderHistory() {
+
+ const query=normalize($("search").value);
+
+ const filtered=records.filter(r=>
+   normalize([
+     r.application,r.status,r.code,r.name,
+     r.phone,r.template,r.messageId,r.call
+   ].join(" ")).includes(query)
+ );
+
+ $("historyTable").innerHTML=filtered.map(r=>`
+ <tr>
+  <td>${escapeHTML(dateText(r.time))}</td>
+  <td>${escapeHTML(r.application)}</td>
+  <td>
+   <span class="status ${r.failed?"failed":"success"}">
+    ${escapeHTML(r.status)}
+   </span>
+  </td>
+  <td>${escapeHTML(r.code||"—")}</td>
+  <td>${escapeHTML(r.call||"—")}</td>
+  <td>${escapeHTML(r.name)}</td>
+  <td>${escapeHTML(r.phone||"—")}</td>
+  <td>${escapeHTML(r.template)}</td>
+  <td title="${escapeHTML(r.messageId)}">
+    ${escapeHTML(r.messageId||"—")}
+  </td>
+ </tr>
+ `).join("") || `
+ <tr><td colspan="9" class="text-center py-4">
+ No matching records
+ </td></tr>`;
+}
+
+function renderTemplates() {
+
+ const summary={};
+
+ records.forEach(r=>{
+   if(!summary[r.template]) {
+     summary[r.template]={
+       total:0,success:0,failed:0,phones:new Set()
+     };
+   }
+
+   const item=summary[r.template];
+
+   item.total++;
+
+   if(r.failed) item.failed++;
+   else item.success++;
+
+   if(r.phone) item.phones.add(r.phone);
+ });
+
+ $("templateTable").innerHTML=
+ Object.entries(summary).map(([name,v])=>`
+ <tr>
+  <td class="fw-semibold">${escapeHTML(name)}</td>
+  <td>${v.total}</td>
+  <td class="text-success">${v.success}</td>
+  <td class="text-danger">${v.failed}</td>
+  <td>${v.phones.size}</td>
+ </tr>
+ `).join("");
+}
+
+// EXCEL EXPORT
+
+function downloadExcel() {
+
+ const wb=XLSX.utils.book_new();
+
+ const summary=[
+  ["WhatsApp API Performance Report"],
+  ["Generated",new Date().toLocaleString()],
+  [],
+  ["Metric","Value"],
+  ["Total API Requests",records.length],
+  ["API Success",totalSuccess()],
+  ["API Failed",totalFailed()],
+  ["Success Rate",records.length
+    ? (totalSuccess()/records.length*100).toFixed(1)+"%"
+    : "—"],
+  ["Unique Recipients",getUniqueRecipients()]
+ ];
+
+ XLSX.utils.book_append_sheet(
+   wb,XLSX.utils.aoa_to_sheet(summary),"Dashboard Summary"
+ );
+
+ const history=[
+  ["Time","Application","Status","Call","Request URL",
+   "Response Code","Recipient Name","WhatsApp Number",
+   "Template","Message ID","Request","Response"],
+
+  ...records.map(r=>[
+   dateText(r.time),r.application,r.status,r.call,r.url,
+   r.code,r.name,r.phone,r.template,r.messageId,
+   typeof r.request==="string" ? r.request : JSON.stringify(r.request),
+   typeof r.response==="string" ? r.response : JSON.stringify(r.response)
+  ])
+ ];
+
+ XLSX.utils.book_append_sheet(
+   wb,XLSX.utils.aoa_to_sheet(history),"API History"
+ );
+
+ XLSX.writeFile(wb,"WhatsApp_API_Report.xlsx");
+}
+
+// CSV EXPORT
+
+function downloadCSV() {
+
+ const data=[
+  ["Time","Application","Status","Call","Response Code",
+   "Recipient Name","WhatsApp Number","Template","Message ID"],
+
+  ...records.map(r=>[
+   dateText(r.time),r.application,r.status,r.call,
+   r.code,r.name,r.phone,r.template,r.messageId
+  ])
+ ];
+
+ const csv=data.map(row=>
+   row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")
+ ).join("\r\n");
+
+ const blob=new Blob(["\ufeff"+csv],{
+   type:"text/csv;charset=utf-8"
+ });
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="WhatsApp_API_History.csv";
+ a.click();
+
+ URL.revokeObjectURL(url);
+}
+
+// FILE UPLOAD
+
+async function processFile(file) {
+
+ records=[];
+ destroyCharts();
+
+ $("dashboard").classList.add("d-none");
+ $("message").textContent="Reading file...";
+
+ try {
+
+   const buffer=await file.arrayBuffer();
+
+   const wb=XLSX.read(buffer,{
+     type:"array",
+     cellDates:true
+   });
+
+   let rows=[];
+
+   wb.SheetNames.forEach(sheetName=>{
+     const sheetRows=XLSX.utils.sheet_to_json(
+       wb.Sheets[sheetName],
+       {defval:"",raw:true}
+     );
+
+     rows.push(...sheetRows);
+   });
+
+   if(!rows.length) {
+     throw new Error("No data rows found in this file.");
+   }
+
+   const first=rows.find(r=>Object.values(r).some(v=>safe(v)!==""));
+
+   if(!first || (
+      !Object.keys(first).some(k=>normalize(k)==="request") &&
+      !Object.keys(first).some(k=>normalize(k)==="response")
+   )) {
+     throw new Error(
+       "Required Request or Response columns were not found. Check your Excel headers."
+     );
+   }
+
+   records=rows
+     .filter(row=>Object.values(row).some(v=>safe(v)!==""))
+     .map(extract)
+     .filter(r=>r.application||r.code||r.request||r.response||r.phone);
+
+   if(!records.length) {
+     throw new Error("No valid API records found.");
+   }
+
+   $("fileName").textContent=file.name;
+
+   $("message").textContent=
+     "Successfully processed "+records.length+" API records.";
+
+   render();
+
+ } catch(error) {
+
+   $("message").textContent="Error: "+error.message;
+
+   $("dashboard").classList.add("d-none");
+
+   console.error(error);
+ }
+}
+
+// EVENTS
+
+$("uploadBtn").addEventListener("click",()=>{
+ $("fileInput").click();
+});
+
+$("fileInput").addEventListener("change",e=>{
+ if(e.target.files.length) {
+   processFile(e.target.files[0]);
+ }
+});
+
+$("search").addEventListener("input",renderHistory);
+
+$("excelBtn").addEventListener("click",downloadExcel);
+
+$("csvBtn").addEventListener("click",downloadCSV);
+
+const dropZone=$("dropZone");
+
+["dragenter","dragover"].forEach(event=>{
+ dropZone.addEventListener(event,e=>{
+   e.preventDefault();
+   dropZone.classList.add("drag");
+ });
+});
+
+["dragleave","drop"].forEach(event=>{
+ dropZone.addEventListener(event,e=>{
+   e.preventDefault();
+   dropZone.classList.remove("drag");
+ });
+});
+
+dropZone.addEventListener("drop",e=>{
+ const file=[...e.dataTransfer.files].find(
+   f=>/\.(csv|xlsx|xls)$/i.test(f.name)
+ );
+
+ if(file) processFile(file);
+});
+
 })();
 </script>
+
 </body>
 </html>
